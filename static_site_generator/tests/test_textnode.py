@@ -34,7 +34,7 @@ def test_TextNode_eq():
                          ])
 def test_empty_TextNode(args, error_message):
     with pytest.raises(TypeError) as te:
-        t1 = TextNode(*args)
+        TextNode(*args)
     assert str(te.value) == error_message
 
 
