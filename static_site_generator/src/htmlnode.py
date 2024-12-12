@@ -38,6 +38,8 @@ class HTMLNode:
                 if not isinstance(k, str) or not isinstance(v, str):
                     raise TypeError("All keys and values in 'props' "
                                     "must be strings")
+        if value is None and children is None:
+            raise ValueError("HTMLNode must have either value or children.")
         self.tag = tag
         self.value = value
         self.children = children

@@ -6,7 +6,7 @@ from src.htmlnode import HTML_ELEMENTS
 
 @pytest.mark.parametrize("tag", HTML_ELEMENTS)
 def test_valid_tags(tag):
-    h1 = HTMLNode(tag=tag)
+    h1 = HTMLNode(tag=tag, value="random value")
     assert h1.tag == tag
 
 
@@ -15,7 +15,7 @@ def test_valid_tags(tag):
                          )
 def test_invalid_tag_input(tag):
     with pytest.raises(ValueError) as ve:
-        HTMLNode(tag=tag)
+        HTMLNode(tag=tag, value="random value")
     assert str(ve.value) == f"Invalid HTML tag: {tag}"
 
 
@@ -35,17 +35,14 @@ def test_invalid_tag_input(tag):
                          ])
 def test_invalid_props_inpput(props, error_message):
     with pytest.raises((TypeError, ValueError)) as e:
-        HTMLNode(props=props)
+        HTMLNode(tag="h1", props=props)
     assert str(e.value) == error_message
 
 
 def test_empty_input():
-    h1 = HTMLNode()
-    assert h1.tag is None
-    assert h1.value is None
-    assert h1.children is None
-    assert h1.props is None
-    assert h1.props_to_html() == ""
+    with pytest.raises(ValueError) as ve:
+        HTMLNode()
+    assert str(ve.value) == "HTMLNode must have either value or children."
 
 
 @pytest.mark.parametrize("tag, value, props",
