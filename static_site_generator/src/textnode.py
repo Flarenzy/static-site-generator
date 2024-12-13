@@ -29,7 +29,8 @@ class TextNode:
 
     def __eq__(self, other: 'TextNode') -> bool:
         if not isinstance(other, TextNode):
-            return False
+            raise TypeError("Cannon't compare TextNode with "
+                            f"{type(other).__name__}")
         return (self.text == other.text and self.text_type == other.text_type
                 and self.url == other.url)
 

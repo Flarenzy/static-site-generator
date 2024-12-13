@@ -1,5 +1,5 @@
-from textnode import TextNode
-from textnode import TextType
+from src.textnode import TextNode
+from src.textnode import TextType
 
 
 def main() -> int:

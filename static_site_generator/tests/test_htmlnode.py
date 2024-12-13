@@ -62,3 +62,14 @@ def test_repr(tag, value, props):
     cmp_str += f"HTMLNode(tag={tag}, value={value}, "
     cmp_str += f"children=None, props={props})"
     assert repr(h1) == cmp_str
+
+
+def test_not_implemented():
+    with pytest.raises(NotImplementedError):
+        HTMLNode(value="some value").to_html()
+
+
+def test_no_props_to_html():
+    h1 = HTMLNode(value="no props to htmk")
+    res = h1.props_to_html()
+    assert res == "", f"Expected empty string got {res}"

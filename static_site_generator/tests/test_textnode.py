@@ -50,3 +50,30 @@ def test_empty_TextNode(args, error_message):
                          ])
 def test_TextTypes(text, text_type):
     assert TextNode(text=text, text_type=text_type).text_type == text_type
+
+
+@pytest.mark.parametrize("cls, value",
+                         [
+                             (int, 5),
+                             (str, "5"),
+                             (float, 5.0),
+                         ])
+def test_invalid_compare(cls, value):
+    with pytest.raises(TypeError, match=("Cannon't compare TextNode with "
+                                         f"{cls.__name__}")):
+        TextNode("This is my text", TextType.ITALIC) == cls(value)
+
+
+@pytest.mark.parametrize("text, text_type, url",
+                         [
+                             (
+                                 "Repr test 1",
+                                 TextType.BOLD,
+                                 ""
+                             )
+                         ])
+def test_repr(text, text_type, url):
+    t1 = TextNode(text=text, text_type=text_type, url=url)
+    expected = f"TextNode({text}, {text_type.value}, {url})"
+    r = repr(t1)
+    assert r == expected, f"Expected:\n {expected}\n Got{r}"
