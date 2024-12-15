@@ -55,9 +55,9 @@ class HTMLNode:
         return " " + " ".join(props)
 
     def __repr__(self):
-        return (f"HTMLNode(tag={self.tag}, value={self.value}, "
+        return (f"{type(self).__name__}(tag={self.tag}, value={self.value}, "
                 f"children={self.children}, props={self.props})")
-    
+
     def __eq__(self, other: 'HTMLNode') -> bool:
         if not isinstance(other, HTMLNode):
             raise TypeError("Cannon't compare HTMLNode with "

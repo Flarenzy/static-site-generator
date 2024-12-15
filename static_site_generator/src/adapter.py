@@ -34,22 +34,21 @@ def split_nodes_delimiter(old_nodes: list[TextNode],
                           text_type: TextType) -> list[TextNode]:
     new_nodes = []
     for node in old_nodes:
-        lst = node.text.split()
-        delim = lst.index(delimiter)
-        delim2 = lst[delim+1:].index(delimiter)
-        first_node = TextNode(" ".join(lst[:delim]),
-                              node.text_type,
-                              node.url)
-        second_node = TextNode(" ".join(lst[delim:delim2]),
-                               text_type, node.url)
-        third_node = TextNode(" ".join(lst[delim2:]),
-                              node.text_type,
-                              node.url)
-        new_nodes.extend((first_node, second_node, third_node))
+        new_nodes.extend(split_node(node, delimiter, text_type))
     return new_nodes
 
 
 def split_node(old_node: TextNode,
                delimiter: str,
-               text_type: TextType) -> TextNode | list[TextNode]:
-    pass
+               text_type: TextType) -> list[TextNode]:
+    if delimiter not in old_node.text:
+        return [old_node]
+    lst = old_node.text.split(delimiter, maxsplit=2)
+    if len(lst) != 3:
+        return [old_node]
+    new_nodes = [
+        TextNode(lst[0], old_node.text_type, old_node.url),
+        TextNode(lst[1], text_type, old_node.url),
+        TextNode(lst[2], old_node.text_type, old_node.url)
+    ]
+    return new_nodes
