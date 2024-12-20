@@ -1,9 +1,10 @@
 from typing import Optional
+
 from src.htmlnode import HTMLNode
 
 
 class ParentNode(HTMLNode):
-    def __init__(self, tag: str, children: list['HTMLNode'], 
+    def __init__(self, tag: str, children: list['HTMLNode'],
                  props: Optional[dict[str, str]] = None):
         super().__init__(tag=tag, children=children, props=props)
 

@@ -1,7 +1,7 @@
 import pytest
 
-from src.htmlnode import HTMLNode
 from src.htmlnode import HTML_ELEMENTS
+from src.htmlnode import HTMLNode
 
 
 @pytest.mark.parametrize("tag", HTML_ELEMENTS)

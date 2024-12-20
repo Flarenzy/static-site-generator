@@ -1,7 +1,7 @@
 import pytest
 
-from src.parentnode import ParentNode
 from src.leafnode import LeafNode
+from src.parentnode import ParentNode
 
 PARENT_TAGS = ["div", "section", "div", "i", "a", "h1", "h2",
                "h3", "td", "tr"]
