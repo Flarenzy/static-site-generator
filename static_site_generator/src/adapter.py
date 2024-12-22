@@ -3,6 +3,8 @@ from src.extracter import split_nodes_link
 from src.leafnode import LeafNode
 from src.textnode import TextNode
 from src.textnode import TextType
+from src.parentnode import ParentNode
+from src.parentnode import HTMLNode
 
 
 def text_node_to_html_node(text_node: TextNode) -> LeafNode:
@@ -83,7 +85,129 @@ def markdown_to_blocks(markdown: str) -> list[str]:
                 blocks.append(current_block)
                 current_block = ""
             continue
-        current_block += line + "\n"
+        current_block += stripped + "\n"
     if current_block:  # in case there is no \n at the end
         blocks.append(current_block)
     return blocks
+
+
+def is_heading(block: str) -> bool:
+    if "#" not in block or not block.startswith("#") or " " not in block:
+        return False
+    parts = block.split()
+    num_headings = parts[0].count("#")
+    if not num_headings or num_headings > 6:
+        return False
+    if num_headings != len(parts[0]):
+        return False
+    if len(parts) < 2:
+        return False
+    return True
+
+
+def is_code(block: str) -> bool:
+    block = block.strip()
+    return block.startswith("```") and block.endswith("```") \
+        and len(block) >= 6
+
+
+def is_quote(block: str) -> bool:
+    return block.startswith(">")
+
+
+def is_unordered_list(block: str) -> bool:
+    block = block.strip()
+    lines = block.split("\n")
+    for line in lines:
+        if not (line.startswith("* ") or line.startswith("- ")):
+            return False
+    return True
+
+
+def is_ordered_list(block: str) -> bool:
+    block = block.strip()
+    i = 0
+    lines = block.split("\n")
+    for line in lines:
+        i += 1
+        if not line.startswith(f"{i}. "):
+            return False
+    return True
+
+
+def block_to_block_type(block: str) -> str:
+    if not isinstance(block, str):
+        raise TypeError(f"Expected string, got {type(block).__name__}")
+    if not block.strip():
+        return "paragraph"
+    if is_heading(block):
+        return "heading"
+    if is_code(block):
+        return "code"
+    if is_quote(block):
+        return "quote"
+    if is_unordered_list(block):
+        return "unordered_list"
+    if is_ordered_list(block):
+        return "ordered_list"
+    print("End of func")
+    return "paragraph"
+
+
+def block_type_to_html_tag(block_type: str) -> str | dict[str, str]:
+    type_to_tag = {
+        "paragraph": "p",
+        "heading": "h",
+        "quote": "blockquote",
+        "code": {"pre": "code"},
+        "unordered_list": {"ul": "li"},
+        "ordered_list": {"ul": "li"},
+    }
+    return type_to_tag[block_type]
+
+
+def tag_to_htmlnode(tag: str | dict[str, str]) -> ParentNode:
+    if isinstance(tag, str):
+        return ParentNode(tag)
+    if len(tag) != 1:
+        raise ValueError("Dafaq")
+    for k in tag:
+        p1 = ParentNode(k, [ParentNode(tag[k])])
+    return p1
+
+
+def text_to_children(text: str) -> list[HTMLNode]:
+    nodes = text_to_textnodes(text)
+    new_nodes = []
+    for node in nodes:
+        new_nodes.append(text_node_to_html_node(node))
+    return new_nodes
+
+
+def remove_block_type(block: str, block_type: str) -> str:
+    match block_type:
+        case "paragraph":
+            return block
+        case "heading":
+            return block.lstrip("#")
+        case "quote":
+            return block.lstrip(">")
+        case "unordered_list":
+            return block
+        case "ordered_list":
+            return block
+        case _:
+            TypeError(f"Expected a block type got {block_type}")
+
+
+def markdown_to_html_node(text: str) -> ParentNode:
+    blocks = markdown_to_blocks(text)
+    root_node = ParentNode("html")
+    for block in blocks:
+        block_type = block_to_block_type(block)
+        html_tag = block_type_to_html_tag(block_type)
+        parent = tag_to_htmlnode(html_tag)
+
+        children = text_to_children(block)
+
+    return ParentNode()

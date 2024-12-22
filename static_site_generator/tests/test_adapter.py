@@ -1,6 +1,12 @@
 import pytest
 
+from src.adapter import block_to_block_type
 from src.adapter import split_nodes_delimiter
+from src.adapter import is_code
+from src.adapter import is_quote
+from src.adapter import is_heading
+from src.adapter import is_unordered_list
+from src.adapter import is_ordered_list
 from src.adapter import text_node_to_html_node
 from src.adapter import text_to_textnodes
 from src.adapter import markdown_to_blocks
@@ -165,6 +171,7 @@ INPUT_FILES = (
     "tests/inputs/valid_markdown.md",
     "tests/inputs/empty.md",
     "tests/inputs/only_newlines.md",
+    "tests/inputs/no_newline.md",
 )
 
 EXPECTED_FOR_FILES = (
@@ -181,6 +188,7 @@ EXPECTED_FOR_FILES = (
      ],
     [],
     [],
+    ["This is a text without a newline."],
 )
 
 MARKDOWN_TO_TEXT = zip(INPUT_FILES, EXPECTED_FOR_FILES)
@@ -192,3 +200,194 @@ def test_markdown_to_text(markdown_file, expected):
         text = f.read()
     res = markdown_to_blocks(text)
     assert res == expected
+
+
+NOT_BLOCK = (
+    5,
+    5.0,
+    ["yes", "no", "maybe"],
+    ("yes", "no", "maybe"),
+    complex(1, 2)
+)
+
+
+@pytest.mark.parametrize("not_block", NOT_BLOCK)
+def test_not_string_block_to_blocks(not_block):
+    with pytest.raises(TypeError):
+        block_to_block_type(not_block)
+
+
+IS_HEADING = (
+    "This is not a valid heading.",
+    "This is also not a valid ## heading",
+    "####NotAValidHeading",
+    "######## Not a heading",
+    "####1 Not a heading",
+    "### ",
+    "###   \n",
+    "# Heading 1",
+    "## Heading 2",
+    "### Heading 3",
+    "#### Heading 4",
+    "##### Heading 5",
+    "###### Heading 6",
+)
+
+EXPECTED_IS_HEADING = (
+    False,
+    False,
+    False,
+    False,
+    False,
+    False,
+    False,
+    True,
+    True,
+    True,
+    True,
+    True,
+    True,
+)
+
+Z_IS_HEADING = zip(IS_HEADING, EXPECTED_IS_HEADING)
+
+
+@pytest.mark.parametrize("args", Z_IS_HEADING)
+def test_is_heading(args):
+    assert is_heading(args[0]) == args[1]
+
+
+IS_CODE = (
+    "```",
+    "```2``",
+    "```This is valid code```",
+    "```Some code block.```",
+    "Just text",
+    "### Heading"
+)
+
+EXPECTED_IS_CODE = (
+    False,
+    False,
+    True,
+    True,
+    False,
+    False,
+)
+
+Z_IS_CODE = zip(IS_CODE, EXPECTED_IS_CODE)
+
+
+@pytest.mark.parametrize("args", Z_IS_CODE)
+def test_is_code(args):
+    assert is_code(args[0]) == args[1]
+
+
+IS_QUOTE = (
+    "This is not a quote.",
+    "This is not a quote > lets say",
+    ">>By our definition this is",
+    "> Yes"
+)
+
+EXPECTED_IS_QUOTE = (
+    False,
+    False,
+    True,
+    True
+)
+
+Z_IS_QUOTE = zip(IS_QUOTE, EXPECTED_IS_QUOTE)
+
+
+@pytest.mark.parametrize("args", Z_IS_QUOTE)
+def test_is_quote(args):
+    assert is_quote(args[0]) == args[1]
+
+
+IS_UNORDERED = (
+    "This is not a list",
+    "** this is not ",
+    "",
+    "* This is\n* an list\n* of items\n",
+    "- this is also\n- an list of items\n",
+    "- this should be\n* true\n- like\n* so true",
+    "1. This is an ordered list\n2. Not an unordered one."
+    )
+
+EXPECTED_IS_UNORDERED = (
+    False,
+    False,
+    False,
+    True,
+    True,
+    True,
+    False,
+)
+
+Z_IS_UNORDERED = zip(IS_UNORDERED, EXPECTED_IS_UNORDERED)
+
+
+@pytest.mark.parametrize("args", Z_IS_UNORDERED)
+def test_is_unordered(args):
+    assert is_unordered_list(args[0]) == args[1]
+
+
+IS_ORDERED = (
+    "Not a list.",
+    "* Unordered list\n2. Lets check\n",
+    "1. List with wrong numbers\n3. Three\n2. Two",
+    "1. One\n2. Two\n3. Three"
+)
+
+EXPECTED_IS_ORDERED = (
+    False,
+    False,
+    False,
+    True
+)
+
+Z_IS_ORDERED = zip(IS_ORDERED, EXPECTED_IS_ORDERED)
+
+
+@pytest.mark.parametrize("args", Z_IS_ORDERED)
+def test_is_ordered(args):
+    assert is_ordered_list(args[0]) == args[1]
+
+
+BLOCK_TO_BLOCK_TYPE = (
+    "\n\n",
+    "# Heading 1",
+    "## Heading 2",
+    "### Heading 3",
+    "#### Heading 4",
+    "##### Heading 5",
+    "###### Heading 6",
+    "```A code block```",
+    "> I always liked this quote",
+    "* Some item\n- that can't\n* be named",
+    "1. Item one\n2. Item two\n3. Item three."
+    "This is just some random text * - ### > ``"
+)
+
+EXPECTED_BLOCK_TO_BLOCK_TYPE = (
+    "paragraph",
+    "heading",
+    "heading",
+    "heading",
+    "heading",
+    "heading",
+    "heading",
+    "code",
+    "quote",
+    "unordered_list",
+    "ordered_list",
+    "paragraph",
+)
+
+Z_BLOCK_TO_BLOCK_TYPE = zip(BLOCK_TO_BLOCK_TYPE, EXPECTED_BLOCK_TO_BLOCK_TYPE)
+
+
+@pytest.mark.parametrize("args", Z_BLOCK_TO_BLOCK_TYPE)
+def test_block_to_block_type(args):
+    assert block_to_block_type(args[0]) == args[1]
