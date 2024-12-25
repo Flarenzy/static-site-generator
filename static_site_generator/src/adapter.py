@@ -78,7 +78,6 @@ def markdown_to_blocks(markdown: str) -> list[str]:
     current_block = ""
     if "\n" not in markdown:
         return [markdown]
-    print(markdown.split("\n"))
     for line in markdown.split("\n"):
         stripped = line.strip()
         if not stripped:
@@ -165,8 +164,6 @@ def block_type_to_html_tag(block: str, block_type: str) -> str | dict[str, str]:
     if block_type == "heading":
         num_heading = block.split()[0].count("#")
         return f"h{num_heading}"
-    if block_type == "code":
-        print("Hit")
     return type_to_tag[block_type]
 
 
