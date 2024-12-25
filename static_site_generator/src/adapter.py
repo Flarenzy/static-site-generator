@@ -58,7 +58,7 @@ def split_node(old_node: TextNode,
     return new_nodes
 
 
-def text_to_textnodes(text: str):
+def text_to_textnodes(text: str) -> list[TextNode]:
     delimiters = ("`", "**", "*")
     text_type = (TextType.CODE, TextType.BOLD, TextType.ITALIC)
     inline = zip(delimiters, text_type)
@@ -78,6 +78,7 @@ def markdown_to_blocks(markdown: str) -> list[str]:
     current_block = ""
     if "\n" not in markdown:
         return [markdown]
+    print(markdown.split("\n"))
     for line in markdown.split("\n"):
         stripped = line.strip()
         if not stripped:
@@ -150,29 +151,32 @@ def block_to_block_type(block: str) -> str:
         return "unordered_list"
     if is_ordered_list(block):
         return "ordered_list"
-    print("End of func")
     return "paragraph"
 
 
-def block_type_to_html_tag(block_type: str) -> str | dict[str, str]:
+def block_type_to_html_tag(block: str, block_type: str) -> str | dict[str, str]:
     type_to_tag = {
         "paragraph": "p",
-        "heading": "h",
         "quote": "blockquote",
         "code": {"pre": "code"},
         "unordered_list": {"ul": "li"},
-        "ordered_list": {"ul": "li"},
+        "ordered_list": {"ol": "li"},
     }
+    if block_type == "heading":
+        num_heading = block.split()[0].count("#")
+        return f"h{num_heading}"
+    if block_type == "code":
+        print("Hit")
     return type_to_tag[block_type]
 
 
 def tag_to_htmlnode(tag: str | dict[str, str]) -> ParentNode:
     if isinstance(tag, str):
-        return ParentNode(tag)
+        return ParentNode(tag, [])
     if len(tag) != 1:
         raise ValueError("Dafaq")
     for k in tag:
-        p1 = ParentNode(k, [ParentNode(tag[k])])
+        p1 = ParentNode(k, [ParentNode(tag[k], [])])
     return p1
 
 
@@ -193,21 +197,49 @@ def remove_block_type(block: str, block_type: str) -> str:
         case "quote":
             return block.lstrip(">")
         case "unordered_list":
-            return block
+            new_block = ""
+            for line in block.split("\n"):
+                new_block += line.lstrip("* ").lstrip("- ") + "\n"
+            return new_block
         case "ordered_list":
-            return block
+            i = 1
+            new_block = ""
+            for line in block.split("\n"):
+                new_block += line.lstrip(f"{i}.") + "\n"
+                i += 1
+            return new_block
+        case "code":
+            return block.strip().strip("```")
         case _:
             TypeError(f"Expected a block type got {block_type}")
 
 
+def add_children(parent: ParentNode, children: list[HTMLNode]) -> ParentNode:
+    new_parent = parent
+    if not parent.children:
+        new_parent.children = children
+        return new_parent
+    new_children = []
+    for child in children:
+        child.tag = parent.children[0].tag
+        new_children.append(child)
+    parent.children = new_children
+    return new_parent
+
+
 def markdown_to_html_node(text: str) -> ParentNode:
     blocks = markdown_to_blocks(text)
-    root_node = ParentNode("html")
+    root_node = ParentNode("div", [])
     for block in blocks:
         block_type = block_to_block_type(block)
-        html_tag = block_type_to_html_tag(block_type)
+        html_tag = block_type_to_html_tag(block, block_type)
+        block = remove_block_type(block, block_type)
         parent = tag_to_htmlnode(html_tag)
-
-        children = text_to_children(block)
-
-    return ParentNode()
+        children = []
+        for line in block.split("\n"):
+            if not line:
+                continue
+            children.extend(text_to_children(line))
+        parent = add_children(parent, children)
+        root_node.children.append(parent)
+    return root_node

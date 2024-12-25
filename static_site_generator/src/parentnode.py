@@ -18,5 +18,7 @@ class ParentNode(HTMLNode):
             html = html.replace(">", self.props_to_html() + ">")
         for child in self.children:
             html += child.to_html()
+            if self.tag == "pre":
+                html += "<br>"
         html += f"</{self.tag}>"
         return html
