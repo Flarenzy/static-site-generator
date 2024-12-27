@@ -52,16 +52,15 @@ def test_TextTypes(text, text_type):
     assert TextNode(text=text, text_type=text_type).text_type == text_type
 
 
-@pytest.mark.parametrize("cls, value",
+@pytest.mark.parametrize("value",
                          [
-                             (int, 5),
-                             (str, "5"),
-                             (float, 5.0),
+                            5,
+                            "5",
+                            5.0,
                          ])
-def test_invalid_compare(cls, value):
-    with pytest.raises(TypeError, match=("Cannon't compare TextNode with "
-                                         f"{cls.__name__}")):
-        TextNode("This is my text", TextType.ITALIC) == cls(value)
+def test_invalid_compare(value):
+    res = TextNode("Some text", TextType.NORMAL).__eq__(value)
+    assert res is NotImplemented
 
 
 @pytest.mark.parametrize("text, text_type, url",

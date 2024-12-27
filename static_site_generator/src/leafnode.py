@@ -13,7 +13,7 @@ class LeafNode(HTMLNode):
             raise TypeError("Leaf node cannot have children.")
         super().__init__(tag, value, children, props)
 
-    def to_html(self) -> str:  # images can not have a value
+    def to_html(self: 'LeafNode') -> str:  # images can not have a value
         if self.value is None and self.tag != "img":
             print(f"Here is the problematic node {repr(self)}")
             raise ValueError("Value must be defined for all LeafNodes!")
@@ -22,5 +22,5 @@ class LeafNode(HTMLNode):
         html = f"<{self.tag}>"
         if self.props:
             html = html.replace(">", self.props_to_html() + ">")
-        html += self.value + f"</{self.tag}>"
+        html += (self.value or "") + f"</{self.tag}>"
         return html

@@ -4,16 +4,16 @@ from typing import Optional
 HTML_ELEMENTS = (
     'a', 'abbr', 'address', 'area', 'article', 'aside', 'audio', 'b', 'base',
     'bdi', 'bdo', 'blockquote', 'body', 'br', 'button', 'canvas', 'caption',
-    'cite', 'code', 'col', 'colgroup', 'data', 'datalist', 'dd', 'del', 
+    'cite', 'code', 'col', 'colgroup', 'data', 'datalist', 'dd', 'del',
     'details',
-    'dfn', 'dialog', 'div', 'dl', 'dt', 'em', 'embed', 'fieldset', 
+    'dfn', 'dialog', 'div', 'dl', 'dt', 'em', 'embed', 'fieldset',
     'figcaption',
     'figure', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'head',
-    'header', 'hr', 'html', 'i', 'iframe', 'img', 'input', 'ins', 'kbd', 
+    'header', 'hr', 'html', 'i', 'iframe', 'img', 'input', 'ins', 'kbd',
     'label',
     'legend', 'li', 'link', 'main', 'map', 'mark', 'meta', 'meter', 'nav',
     'noscript', 'object', 'ol', 'optgroup', 'option', 'output', 'p', 'picture',
-    'pre', 'progress', 'q', 'rp', 'rt', 'ruby', 's', 'samp', 'script', 
+    'pre', 'progress', 'q', 'rp', 'rt', 'ruby', 's', 'samp', 'script',
     'section',
     'select', 'small', 'source', 'span', 'strong', 'style', 'sub', 'summary',
     'sup', 'table', 'tbody', 'td', 'template', 'textarea', 'tfoot', 'th',
@@ -45,23 +45,22 @@ class HTMLNode:
         self.children = children
         self.props = props
 
-    def to_html(self):
+    def to_html(self: 'HTMLNode') -> str:
         raise NotImplementedError()
 
-    def props_to_html(self):
+    def props_to_html(self: 'HTMLNode') -> str:
         if not self.props:
             return ""
         props = [f"{k}=\"{self.props[k]}\"" for k in self.props]
         return " " + " ".join(props)
 
-    def __repr__(self):
+    def __repr__(self: 'HTMLNode') -> str:
         return (f"{type(self).__name__}(tag={self.tag}, value={self.value}, "
                 f"children={self.children}, props={self.props})")
 
-    def __eq__(self, other: 'HTMLNode') -> bool:
+    def __eq__(self: 'HTMLNode', other: 'object') -> bool:
         if not isinstance(other, HTMLNode):
-            raise TypeError("Cannon't compare HTMLNode with "
-                            f"{type(other).__name__}")
+            return NotImplemented
         return (self.tag == other.tag and self.value == other.value
                 and self.children == other.children
                 and self.props == other.props)

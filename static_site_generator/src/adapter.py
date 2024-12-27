@@ -1,10 +1,13 @@
+from typing import NoReturn
+from typing import Union
+
 from src.extracter import split_nodes_image
 from src.extracter import split_nodes_link
+from src.htmlnode import HTMLNode
 from src.leafnode import LeafNode
 from src.textnode import TextNode
 from src.textnode import TextType
 from src.parentnode import ParentNode
-from src.parentnode import HTMLNode
 
 
 def text_node_to_html_node(text_node: TextNode) -> LeafNode:
@@ -20,17 +23,21 @@ def text_node_to_html_node(text_node: TextNode) -> LeafNode:
         case TextType.CODE:
             return LeafNode(tag="code", value=text_node.text)
         case TextType.LINKS:
+            if text_node.url is None:
+                raise ValueError("Url is required for TextType.LINKS")
             return LeafNode(tag="a",
                             value=text_node.text,
                             props={"href": text_node.url})
         case TextType.IMAGES:
+            if text_node.url is None:
+                raise ValueError("Url is required for TextType.IMAGES")
             return LeafNode(tag="img", value="",
                             props={"src": text_node.url,
                                    "alt": text_node.text})
-        case _:
-            allowed = [tt.value for tt in TextType]
-            raise TypeError(f"{text_node.text_type} "
-                            f"must be one of {*allowed, }")
+        # case _:
+        #     allowed = [tt.value for tt in TextType]
+        #     raise TypeError(f"{text_node.text_type} "
+        #                     f"must be one of {*allowed, }")
 
 
 def split_nodes_delimiter(old_nodes: list[TextNode],
@@ -60,8 +67,8 @@ def split_node(old_node: TextNode,
 
 def text_to_textnodes(text: str) -> list[TextNode]:
     delimiters = ("`", "**", "*")
-    text_type = (TextType.CODE, TextType.BOLD, TextType.ITALIC)
-    inline = zip(delimiters, text_type)
+    text_types = (TextType.CODE, TextType.BOLD, TextType.ITALIC)
+    inline = zip(delimiters, text_types)
     node = TextNode(text, TextType.NORMAL)
     nodes = [node]
     for delimiter, text_type in inline:
@@ -153,8 +160,9 @@ def block_to_block_type(block: str) -> str:
     return "paragraph"
 
 
-def block_type_to_html_tag(block: str, block_type: str) -> str | dict[str, str]:
-    type_to_tag = {
+def block_type_to_html_tag(block: str,
+                           block_type: str) -> str | dict[str, str]:
+    type_to_tag: dict[str, Union[str, dict[str, str]]] = {
         "paragraph": "p",
         "quote": "blockquote",
         "code": {"pre": "code"},
@@ -177,7 +185,7 @@ def tag_to_htmlnode(tag: str | dict[str, str]) -> ParentNode:
     return p1
 
 
-def text_to_children(text: str) -> list[HTMLNode]:
+def text_to_children(text: str) -> list[LeafNode]:
     nodes = text_to_textnodes(text)
     new_nodes = []
     for node in nodes:
@@ -185,7 +193,13 @@ def text_to_children(text: str) -> list[HTMLNode]:
     return new_nodes
 
 
+def _raise_type_error(block_type: str) -> NoReturn:
+    raise TypeError(f"Expected a block type got {block_type}")
+
+
 def remove_block_type(block: str, block_type: str) -> str:
+    if not block or not block_type:
+        return ""
     match block_type:
         case "paragraph":
             return block
@@ -208,11 +222,13 @@ def remove_block_type(block: str, block_type: str) -> str:
         case "code":
             return block.strip().strip("```")
         case _:
-            TypeError(f"Expected a block type got {block_type}")
+            _raise_type_error(block_type)
 
 
 def add_children(parent: ParentNode, children: list[HTMLNode]) -> ParentNode:
     new_parent = parent
+    if not children:
+        raise TypeError("Children is a list of Leaf or Parent nodes.")
     if not parent.children:
         new_parent.children = children
         return new_parent
@@ -226,17 +242,20 @@ def add_children(parent: ParentNode, children: list[HTMLNode]) -> ParentNode:
 
 def markdown_to_html_node(text: str) -> ParentNode:
     blocks = markdown_to_blocks(text)
-    root_node = ParentNode("div", [])
+    root_node: ParentNode = ParentNode("div", [])
     for block in blocks:
         block_type = block_to_block_type(block)
         html_tag = block_type_to_html_tag(block, block_type)
         block = remove_block_type(block, block_type)
         parent = tag_to_htmlnode(html_tag)
-        children = []
+        children: list[HTMLNode] = []
         for line in block.split("\n"):
             if not line:
                 continue
             children.extend(text_to_children(line))
         parent = add_children(parent, children)
+        if root_node.children is None:
+            raise TypeError("Unexpected error,"
+                            "children doesnt reference a list.")
         root_node.children.append(parent)
     return root_node
