@@ -47,13 +47,6 @@ def test_valid(args):
                                  f" {expected_leaf}, got {l1}")
 
 
-def test_invalid():
-    with pytest.raises(TypeError):
-        text_node_to_html_node(TextNode("test invalid",
-                                        (1, 2),
-                                        "www.dummy.com"))
-
-
 def test_raises():
     with pytest.raises(TypeError, match="Cannon't convert None to HTMLNode."):
         text_node_to_html_node(None)

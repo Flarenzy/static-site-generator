@@ -17,6 +17,9 @@ class TextNode:
         if text is None or text_type is None:
             raise TypeError("TextNode.__init__() missing 2 required \
                                 positional arguments: 'text' and 'text_type'")
+        if text_type not in TextType:
+            raise TypeError("text_type must be an element"
+                            " from the TextType enum.")
         self.text = text
         self.text_type = text_type
         self.url = url

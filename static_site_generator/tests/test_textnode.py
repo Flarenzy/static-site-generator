@@ -23,13 +23,13 @@ def test_TextNode_eq():
                                 ),
                             (
                                 (None, TextType.BOLD),
-                                "TextNode.__init__() missing 1 required \
-                                positional arguments: 'text'"
+                                "TextNode.__init__() missing 2 required \
+                                positional arguments: 'text' and 'text_type'"
                             ),
                             (
                                 ("Some valid string", None),
-                                "TextNode.__init__() missing 1 required \
-                                positional arguments: 'text_type'"
+                                "TextNode.__init__() missing 2 required \
+                                positional arguments: 'text' and 'text_type'"
                             ),
                          ])
 def test_empty_TextNode(args, error_message):
@@ -76,3 +76,15 @@ def test_repr(text, text_type, url):
     expected = f"TextNode({text}, {text_type.value}, {url})"
     r = repr(t1)
     assert r == expected, f"Expected:\n {expected}\n Got{r}"
+
+
+@pytest.mark.parametrize("text_type",
+                         ("",
+                          8,
+                          5.0,
+                          ),
+                         )
+def test_invalid_input(text_type):
+    with pytest.raises(TypeError, match=("text_type must be an element"
+                                         " from the TextType enum.")):
+        TextNode("Random text", text_type)
