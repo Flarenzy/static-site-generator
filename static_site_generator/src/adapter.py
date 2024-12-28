@@ -216,7 +216,7 @@ def remove_block_type(block: str, block_type: str) -> str:
             i = 1
             new_block = ""
             for line in block.split("\n"):
-                new_block += line.lstrip(f"{i}.") + "\n"
+                new_block += line.lstrip(f"{i}. ") + "\n"
                 i += 1
             return new_block
         case "code":

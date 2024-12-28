@@ -1,15 +1,20 @@
 import pytest
 
 from src.adapter import block_to_block_type
+from src.adapter import block_type_to_html_tag
 from src.adapter import split_nodes_delimiter
 from src.adapter import is_code
 from src.adapter import is_quote
 from src.adapter import is_heading
 from src.adapter import is_unordered_list
 from src.adapter import is_ordered_list
+from src.adapter import tag_to_htmlnode
+from src.adapter import text_to_children
 from src.adapter import text_node_to_html_node
 from src.adapter import text_to_textnodes
+from src.adapter import remove_block_type
 from src.adapter import markdown_to_blocks
+from src.parentnode import ParentNode
 from src.leafnode import LeafNode
 from src.textnode import TextNode
 from src.textnode import TextType
@@ -359,7 +364,7 @@ BLOCK_TO_BLOCK_TYPE = (
     "```A code block```",
     "> I always liked this quote",
     "* Some item\n- that can't\n* be named",
-    "1. Item one\n2. Item two\n3. Item three."
+    "1. Item one\n2. Item two\n3. Item three.",
     "This is just some random text * - ### > ``"
 )
 
@@ -381,6 +386,139 @@ EXPECTED_BLOCK_TO_BLOCK_TYPE = (
 Z_BLOCK_TO_BLOCK_TYPE = zip(BLOCK_TO_BLOCK_TYPE, EXPECTED_BLOCK_TO_BLOCK_TYPE)
 
 
-@pytest.mark.parametrize("args", Z_BLOCK_TO_BLOCK_TYPE)
-def test_block_to_block_type(args):
-    assert block_to_block_type(args[0]) == args[1]
+@pytest.mark.parametrize("block, expected_block_type", Z_BLOCK_TO_BLOCK_TYPE)
+def test_block_to_block_type(block, expected_block_type):
+    assert block_to_block_type(block) == expected_block_type
+
+
+BLOCK_TYPE_TO_HTML_TAG = (
+    "p",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    {"pre": "code"},
+    "blockquote",
+    {"ul": "li"},
+    {"ol": "li"},
+    "p"
+)
+
+Z_BLOCK_TYPE_TO_HTML_TAG = zip(BLOCK_TO_BLOCK_TYPE,
+                               EXPECTED_BLOCK_TO_BLOCK_TYPE,
+                               BLOCK_TYPE_TO_HTML_TAG)
+
+
+@pytest.mark.parametrize("block, block_type, expected_html_tag",
+                         Z_BLOCK_TYPE_TO_HTML_TAG)
+def test_block_type_to_html_tag(block,
+                                block_type,
+                                expected_html_tag):
+    assert block_type_to_html_tag(block, block_type) == expected_html_tag
+
+
+PARENT_NODES = (
+    ParentNode("p", []),
+    ParentNode("h1", []),
+    ParentNode("h2", []),
+    ParentNode("h3", []),
+    ParentNode("h4", []),
+    ParentNode("h5", []),
+    ParentNode("h6", []),
+    ParentNode("pre", [ParentNode("code", [])]),
+    ParentNode("blockquote", []),
+    ParentNode("ul", [ParentNode("li", [])]),
+    ParentNode("ol", [ParentNode("li", [])]),
+    ParentNode("p", [])
+)
+
+
+@pytest.mark.parametrize("tag, expected_node",
+                         zip(BLOCK_TYPE_TO_HTML_TAG, PARENT_NODES))
+def test_tag_to_html_node(tag, expected_node):
+    assert tag_to_htmlnode(tag) == expected_node
+
+
+def test_raises_tag_to_html_node():
+    with pytest.raises(ValueError, match="Dafaq"):
+        tag_to_htmlnode({"div": {"p"}, "code": "bro"})
+
+
+TEXT_TO_CHILDREN = (
+    "Or inline code like `var foo = 'bar';`.",
+    ("And **bold**, *italics*, and even yes. "
+     "[A link](https://markdowntohtml.com) to somewhere."),
+    "This is some basic, sample markdown."
+)
+
+EXPECTED_CHILDREN = (
+    [
+        LeafNode(value="Or inline code like "),
+        LeafNode("code", "var foo = 'bar';"),
+        LeafNode(value=".")
+     ],
+    [
+        LeafNode(value="And "),
+        LeafNode(tag="b", value="bold"),
+        LeafNode(value=", "),
+        LeafNode(tag="i", value="italics"),
+        LeafNode(value=", and even yes. "),
+        LeafNode(tag="a",
+                 value="A link",
+                 props={"href": "https://markdowntohtml.com"}),
+        LeafNode(value=" to somewhere.")
+     ],
+    [
+         LeafNode(value="This is some basic, sample markdown.")
+     ]
+)
+
+
+@pytest.mark.parametrize("text, expected_children",
+                         zip(TEXT_TO_CHILDREN, EXPECTED_CHILDREN))
+def test_text_to_children(text, expected_children):
+    assert text_to_children(text) == expected_children
+
+
+BLOCK_AFTER_TYPE_REMOVAL = (
+    "\n\n",
+    " Heading 1",
+    " Heading 2",
+    " Heading 3",
+    " Heading 4",
+    " Heading 5",
+    " Heading 6",
+    "A code block",
+    " I always liked this quote",
+    "Some item\nthat can't\nbe named\n",
+    "Item one\nItem two\nItem three.\n",
+    "This is just some random text * - ### > ``"
+)
+
+
+@pytest.mark.parametrize("block, block_type, expected_block",
+                         zip(BLOCK_TO_BLOCK_TYPE,
+                             EXPECTED_BLOCK_TO_BLOCK_TYPE,
+                             BLOCK_AFTER_TYPE_REMOVAL)
+                         )
+def test_remove_block_type(block, block_type, expected_block):
+    assert remove_block_type(block, block_type) == expected_block
+
+
+@pytest.mark.parametrize("block, block_type, expected",
+                         (
+                            ("", "heading", ""),
+                            ("text test", "", ""),
+                          )
+                         )
+def test_empty_block_or_type_removal(block,
+                                     block_type,
+                                     expected):
+    assert remove_block_type(block, block_type) == expected
+
+
+def test_invalid_block_type():
+    with pytest.raises(TypeError, match="Expected a block type got "):
+        remove_block_type("Random block", "invalid-type")
