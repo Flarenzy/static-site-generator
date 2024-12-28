@@ -69,3 +69,10 @@ def split_nodes_link(old_nodes: list[TextNode]) -> list[TextNode]:
         if node_text:
             new_nodes.append(TextNode(node_text, TextType.NORMAL))
     return new_nodes
+
+
+def extract_title(markdown: str) -> str:
+    for line in markdown.split("\n"):
+        if line.startswith("# "):
+            return line.lstrip("# ").strip()
+    raise Exception("Missing title from markdown.")

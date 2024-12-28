@@ -4,6 +4,7 @@ from src.extracter import extract_markdown_images
 from src.extracter import extract_markdown_links
 from src.extracter import split_nodes_image
 from src.extracter import split_nodes_link
+from src.extracter import extract_title
 from src.textnode import TextNode
 from src.textnode import TextType
 
@@ -160,3 +161,14 @@ def test_split_nodes_link():
 def test_empty_split():
     assert [] == split_nodes_image([])
     assert [] == split_nodes_link([])
+
+
+def test_extract_markdown_title():
+    with open("tests/inputs/sample_markdown.md", "r") as f:
+        assert extract_title(f.read()) == "Sample Markdown"
+
+
+def test_no_title_in_markdown():
+    with pytest.raises(Exception,
+                       match="Missing title from markdown."):
+        extract_title("Some random text.")

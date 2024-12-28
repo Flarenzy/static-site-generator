@@ -1,3 +1,4 @@
+import logging
 from typing import NoReturn
 from typing import Union
 
@@ -8,6 +9,9 @@ from src.leafnode import LeafNode
 from src.parentnode import ParentNode
 from src.textnode import TextNode
 from src.textnode import TextType
+
+
+logger = logging.getLogger(__name__)
 
 
 def text_node_to_html_node(text_node: TextNode) -> LeafNode:
@@ -62,6 +66,9 @@ def split_node(old_node: TextNode,
         TextNode(lst[1], text_type, old_node.url),
         TextNode(lst[2], old_node.text_type, old_node.url)
     ]
+    for node in new_nodes:
+        if not node.text:
+            new_nodes.remove(node)
     return new_nodes
 
 
@@ -204,9 +211,9 @@ def remove_block_type(block: str, block_type: str) -> str:
         case "paragraph":
             return block
         case "heading":
-            return block.lstrip("#")
+            return block.lstrip("#").strip()
         case "quote":
-            return block.lstrip(">")
+            return block.lstrip(">").strip()
         case "unordered_list":
             new_block = ""
             for line in block.split("\n"):
@@ -226,6 +233,8 @@ def remove_block_type(block: str, block_type: str) -> str:
 
 
 def add_children(parent: ParentNode, children: list[HTMLNode]) -> ParentNode:
+    # logging.info(f"parent:\n{parent}")
+    # logging.info(f"children:\n{children}")
     new_parent = parent
     if not children:
         raise TypeError("Children is a list of Leaf or Parent nodes.")
@@ -252,7 +261,14 @@ def markdown_to_html_node(text: str) -> ParentNode:
         for line in block.split("\n"):
             if not line:
                 continue
-            children.extend(text_to_children(line))
+            leaf_children = text_to_children(line)
+            if len(leaf_children) == 1:
+                children.extend(leaf_children)
+            else:
+                temp_par = ParentNode("code", [])
+                for child in leaf_children:
+                    temp_par.children.append(child)
+                children.append(temp_par)
         parent = add_children(parent, children)
         if root_node.children is None:
             raise TypeError("Unexpected error,"
