@@ -5,9 +5,9 @@ from src.extracter import split_nodes_image
 from src.extracter import split_nodes_link
 from src.htmlnode import HTMLNode
 from src.leafnode import LeafNode
+from src.parentnode import ParentNode
 from src.textnode import TextNode
 from src.textnode import TextType
-from src.parentnode import ParentNode
 
 
 def text_node_to_html_node(text_node: TextNode) -> LeafNode:
